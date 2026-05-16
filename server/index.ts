@@ -48,10 +48,10 @@ startAuth({
   adminIds: ADMIN_IDS,
 });
 
-const master = new CompositeMasterSource([
+const master = new CompositeMasterSource(
   new OpenBdSource(db),
   new LocalEquipmentSource(db),
-]);
+);
 
 const app = new Hono();
 app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'OPTIONS'] }));

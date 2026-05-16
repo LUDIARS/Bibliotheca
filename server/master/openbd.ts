@@ -5,7 +5,7 @@
 
 import type Database from 'better-sqlite3';
 import { getMetaCache, putMetaCache } from '../db.ts';
-import type { BookMeta, EquipmentMeta, MasterSource } from './source.ts';
+import type { BookMeta, BookSource } from './source.ts';
 
 const OPENBD_ENDPOINT = 'https://api.openbd.jp/v1/get';
 
@@ -19,7 +19,7 @@ interface OpenBdEntry {
   };
 }
 
-export class OpenBdSource implements MasterSource {
+export class OpenBdSource implements BookSource {
   constructor(private readonly db: Database.Database) {}
 
   async lookupBook(isbn: string): Promise<BookMeta | null> {
@@ -61,11 +61,5 @@ export class OpenBdSource implements MasterSource {
       console.warn(`[openbd] fetch failed: ${msg}`);
       return null;
     }
-  }
-
-  // OpenBD は機材を扱わない。 機材は LocalEquipmentSource 側で解決する。
-  async lookupEquipment(_qrCode: string): Promise<EquipmentMeta | null> {
-    void _qrCode;
-    return null;
   }
 }

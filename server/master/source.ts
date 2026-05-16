@@ -2,8 +2,11 @@
 //
 // 書籍 / 機材の「中身」(タイトル / 著者 / 名称 / 仕様) は Bibliotheca が
 // 直接持たない。 ISBN や QR を key に外部 DB へ問い合わせる。
-// 現段階では OpenBD (書籍) と SQLite の equipment テーブル (機材) を
-// 使うが、 後で社内マスタ DB に差し替える前提でこの interface に統一する。
+//
+// 書籍と機材は別マスタが原則 (ユーザ要件)。 そのため interface も
+// `BookSource` と `EquipmentSource` に分け、 adapter は自分の領域だけ実装する。
+// 呼び出し側 (routes/*) は両方欲しいので、 facade として `MasterSource` を
+// `CompositeMasterSource` で組み立てて渡す。
 
 import type Database from 'better-sqlite3';
 
@@ -21,10 +24,15 @@ export interface EquipmentMeta {
   spec: string | null;
 }
 
-export interface MasterSource {
+export interface BookSource {
   lookupBook(isbn: string): Promise<BookMeta | null>;
+}
+
+export interface EquipmentSource {
   lookupEquipment(qrCode: string): Promise<EquipmentMeta | null>;
 }
+
+export interface MasterSource extends BookSource, EquipmentSource {}
 
 export interface MasterSourceCtx {
   db: Database.Database;
