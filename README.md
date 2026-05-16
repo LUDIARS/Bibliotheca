@@ -35,12 +35,48 @@ LUDIARS の本 / 機材 貸出台帳。 Cernere SSO + カメラスキャン (ISB
 
 ## 起動
 
+3 種類の env 供給モードに対応。 起動時に env-bootstrap が順次拾う。
+
+### Mode A: ローカル .env (一番手軽)
+
 ```bash
 cp .env.example .env
 # .env を編集: BIBLIOTHECA_ADMIN_IDS にユーザ ID を列挙
 npm install
-npm run dev     # tsx watch + esbuild watch (frontend は predev で build)
+npm run dev
 ```
+
+### Mode B: Infisical (env-cli 経由) — 推奨
+
+machine identity (`INFISICAL_*`) を `.env.secrets` に保存し、 アプリ値は
+Infisical 側に置く。 Memoria / Cernere / Actio / Nuntius と同パターン。
+
+```bash
+npm install
+npm run env:setup       # Infisical machine identity を対話入力 → .env.secrets
+npm run env:test        # Infisical 接続確認
+npm run env:list        # 登録済 secret 一覧
+npm run env:set BIBLIOTHECA_ADMIN_IDS user_abc,user_def
+npm run dev             # bootstrap.ts が起動時に Infisical から fetch + inject
+```
+
+### Mode C: Excubitor 経由 (本番運用)
+
+Excubitor が parent → child process に `INFISICAL_*` を直接 inject。
+リポに `.env*` を置く必要なし。 catalog.yaml で
+`infisical.inject: true` を立てるだけ。
+
+### 起動シーケンス
+
+`npm run dev` は `tsx watch --env-file-if-exists=.env.secrets
+--env-file-if-exists=.env server/bootstrap.ts` を呼ぶ。 bootstrap が:
+
+1. `.env.secrets` (INFISICAL_*) と `.env` (アプリ env のローカルフォールバック) を読む
+2. `ensureEnv()` が Infisical から secret を fetch + inject (既存値は上書きしない)
+3. `index.ts` を import して本体起動
+
+Infisical 到達不可・creds 未設定でも throw せず、 `.env` / host env のみで
+graceful degrade する。
 
 デフォルト `http://localhost:17501` (loopback)。
 

@@ -18,6 +18,9 @@
 - 返却操作は `requireAdmin` middleware で保護 — `BIBLIOTHECA_ADMIN_IDS` を信頼源にする
 - 個人データは Cernere 単一情報源、 自前 DB には `userId` (= Cernere sub) と
   display name の **キャッシュ** のみ保持
+- 起動口は `server/bootstrap.ts`: Infisical machine identity (INFISICAL_*) →
+  `ensureEnv()` で Infisical から secret fetch & inject → `index.ts` 読み込み。
+  .env / .env.secrets / host env / Infisical を多段で merge する
 
 ## マスタソース追加の流れ
 

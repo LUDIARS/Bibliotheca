@@ -5,6 +5,7 @@ public/app.js.map
 .env
 .env.local
 .env.secrets
+.env.*.local
 *.log
 .DS_Store
 Thumbs.db
