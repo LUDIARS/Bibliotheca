@@ -96,7 +96,7 @@ export interface EquipmentRow {
 }
 
 export const api = {
-  me: () => req<MeResponse>('/api/me/'),
+  me: () => req<MeResponse>('/api/me'),
   lookup: (source: 'book' | 'equipment', key: string) =>
     req<{ source: string; meta: BookMeta | EquipmentMeta }>(
       `/api/items/lookup?source=${source}&key=${encodeURIComponent(key)}`,
@@ -114,7 +114,7 @@ export const api = {
     due_at: string | null,
     note: string | null,
   ) =>
-    req<{ loan: LoanView }>('/api/loans/', {
+    req<{ loan: LoanView }>('/api/loans', {
       method: 'POST',
       body: JSON.stringify({ source, external_key, due_at, note }),
     }),

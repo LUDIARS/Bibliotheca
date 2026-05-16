@@ -25,7 +25,7 @@ import { makeMeRouter } from './routes/me.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const PORT = Number(process.env.BIBLIOTHECA_PORT ?? 17500);
+const PORT = Number(process.env.BIBLIOTHECA_PORT ?? 17501);
 const DATA_DIR = resolve(
   process.env.BIBLIOTHECA_DATA ?? join(__dirname, '..', 'data'),
 );

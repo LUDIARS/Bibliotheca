@@ -42,12 +42,15 @@ npm install
 npm run dev     # tsx watch + esbuild watch (frontend は predev で build)
 ```
 
-デフォルト `http://localhost:17500` (loopback)。
+デフォルト `http://localhost:17501` (loopback)。
 
 ## ポート
 
-`17500` — LUDIARS port-map の loopback サービスレンジ (17000–17999)。
+`17501` — LUDIARS port-map の loopback サービスレンジ (17000–17999)。
 `infra/PORT-MAP.md` への登録は別 PR。
+
+> 注: 当初 17500 を選んだが Windows では Dropbox LAN sync が `0.0.0.0:17500`
+> を常に squat するため、 1 つずらして 17501 を採用した。
 
 ## ライセンス
 
