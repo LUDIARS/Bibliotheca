@@ -1,0 +1,341 @@
+/* Bibliotheca — Foundation UI 準拠の最小スタイル。 Memoria の tokens を移植。 */
+
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --border: #e3e5ea;
+  --text: #1d2230;
+  --muted: #6b7280;
+  --accent: #2a6df4;
+  --accent-bg: #e8f0ff;
+  --danger: #c0392b;
+  --success: #1f8a4c;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* ── Topbar ───────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand { font-weight: 700; font-size: 18px; color: var(--accent); }
+.topbar-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+.me-badge {
+  font-size: 12px;
+  color: var(--muted);
+}
+.admin-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-weight: 600;
+}
+
+/* ── Tabbar ───────────────────────────────────────────── */
+.tabbar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: sticky;
+  top: 49px;
+  z-index: 9;
+}
+.tab {
+  flex: 0 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Content ──────────────────────────────────────────── */
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.view[hidden] { display: none; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.panel h3 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.muted { color: var(--muted); font-size: 12px; }
+
+/* ── Foundation form (Memoria 移植) ──────────────────── */
+.foundation-form {
+  display: grid;
+  gap: 10px;
+}
+.foundation-form .simple-field {
+  display: grid;
+  gap: 6px;
+}
+.foundation-form .simple-field > span {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.foundation-form input[type="text"],
+.foundation-form input[type="search"],
+.foundation-form input[type="number"],
+.foundation-form input[type="date"],
+.foundation-form input:not([type]),
+.foundation-form textarea,
+.foundation-form select {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+}
+.foundation-form input:focus,
+.foundation-form textarea:focus,
+.foundation-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.foundation-form .simple-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.simple-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .simple-field-row { grid-template-columns: 1fr; }
+}
+
+/* ── Buttons ──────────────────────────────────────────── */
+button {
+  font: inherit;
+  cursor: pointer;
+}
+.primary {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+}
+.primary:disabled {
+  background: #a5b5d8;
+  border-color: #a5b5d8;
+  cursor: not-allowed;
+}
+.ghost {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 14px;
+}
+.ghost:hover { background: var(--bg); }
+.danger {
+  background: var(--danger);
+  color: #fff;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+/* ── Scan row ─────────────────────────────────────────── */
+.scan-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.scan-row .primary { flex: 1 1 200px; }
+
+/* ── Lookup result ────────────────────────────────────── */
+.lookup-result {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.lookup-result:empty { display: none; }
+.lookup-result .title { font-weight: 600; margin-bottom: 4px; }
+.lookup-result .sub { color: var(--muted); font-size: 12px; }
+.lookup-result.err { color: var(--danger); }
+
+/* ── Scanner overlay ──────────────────────────────────── */
+.scanner-area {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+}
+.scanner-area video {
+  width: 100%;
+  max-width: 480px;
+  max-height: 70vh;
+  border-radius: 12px;
+  background: #000;
+}
+.scanner-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #fff;
+  font-size: 13px;
+}
+.scanner-actions .ghost {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Loan list ────────────────────────────────────────── */
+.loan-list, .equip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.loan-item, .equip-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.loan-item .row1 {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.loan-item .label {
+  font-weight: 600;
+}
+.loan-item .source-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.loan-item .source-tag.book {
+  border-color: #c0a45e;
+  color: #8a6914;
+  background: #fff8e1;
+}
+.loan-item .source-tag.equipment {
+  border-color: #5e8ec0;
+  color: #14538a;
+  background: #e1eeff;
+}
+.loan-item .key { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.loan-item .meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.loan-item .meta .returned { color: var(--success); }
+.loan-item .actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.equip-item .name { font-weight: 600; }
+.equip-item .qr { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.equip-item .spec { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Toast ────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: rgba(29, 34, 48, 0.92);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.toast.err { background: var(--danger); }
+.toast.ok { background: var(--success); }

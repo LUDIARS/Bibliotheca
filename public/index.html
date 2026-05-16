@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#2a6df4" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Bibliotheca" />
+  <title>Bibliotheca</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css?v=20260516a" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Bibliotheca</div>
+    <div class="topbar-controls">
+      <span id="meBadge" class="me-badge" hidden></span>
+      <span id="adminBadge" class="admin-badge" hidden>admin</span>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button type="button" class="tab active" data-view="borrow">借りる</button>
+    <button type="button" class="tab" data-view="mine">自分の貸出</button>
+    <button type="button" class="tab" data-view="open">貸出中一覧</button>
+    <button type="button" class="tab" data-view="admin" hidden>管理</button>
+  </nav>
+
+  <main class="content">
+    <!-- ── 借りる ────────────────────────────────────────────── -->
+    <section class="view" data-view="borrow">
+      <div class="panel foundation-form">
+        <h2>借りる</h2>
+        <div class="scan-row">
+          <button type="button" id="scanBookBtn" class="primary">📷 ISBN (本) をスキャン</button>
+          <button type="button" id="scanQrBtn" class="primary">📷 QR (機材) をスキャン</button>
+        </div>
+        <label class="simple-field">
+          <span>または key を直接入力</span>
+          <input type="text" id="manualKey" placeholder="ISBN-13 または QR 文字列" />
+        </label>
+        <div class="simple-field-row">
+          <label class="simple-field">
+            <span>種類</span>
+            <select id="manualSource">
+              <option value="book">本 (ISBN)</option>
+              <option value="equipment">機材 (QR)</option>
+            </select>
+          </label>
+          <label class="simple-field">
+            <span>返却予定日 (任意)</span>
+            <input type="date" id="dueAt" />
+          </label>
+        </div>
+        <label class="simple-field">
+          <span>メモ (任意)</span>
+          <input type="text" id="note" placeholder="例: 第3章まで読む予定" />
+        </label>
+        <div class="simple-actions">
+          <button type="button" id="lookupBtn" class="ghost">中身を確認</button>
+          <button type="button" id="borrowBtn" class="primary" disabled>借りる</button>
+        </div>
+        <div id="lookupResult" class="lookup-result"></div>
+      </div>
+      <div id="scannerArea" class="scanner-area" hidden>
+        <video id="scannerVideo" autoplay muted playsinline></video>
+        <div class="scanner-actions">
+          <span id="scannerHint">バーコード/QR をカメラに写してください</span>
+          <button type="button" id="scannerCancel" class="ghost">キャンセル</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 自分の貸出 ────────────────────────────────────────── -->
+    <section class="view" data-view="mine" hidden>
+      <div class="panel">
+        <h2>自分が借りているもの</h2>
+        <label class="toggle">
+          <input type="checkbox" id="mineIncludeReturned" /> 返却済も含める
+        </label>
+        <ul id="mineList" class="loan-list"></ul>
+      </div>
+    </section>
+
+    <!-- ── 貸出中一覧 (誰が何を) ────────────────────────────── -->
+    <section class="view" data-view="open" hidden>
+      <div class="panel">
+        <h2>貸出中一覧</h2>
+        <ul id="openList" class="loan-list"></ul>
+      </div>
+    </section>
+
+    <!-- ── 管理 (admin only) ────────────────────────────────── -->
+    <section class="view" data-view="admin" hidden>
+      <div class="panel foundation-form">
+        <h2>機材マスタ登録</h2>
+        <p class="muted">
+          機材のマスタ DB が無い間は、 ここで QR + 名前 + 仕様を登録します。
+          登録済の QR でないと貸出できません。
+        </p>
+        <label class="simple-field">
+          <span>QR コード</span>
+          <input type="text" id="equipQr" placeholder="QR をスキャンして取得した文字列" />
+        </label>
+        <label class="simple-field">
+          <span>名前</span>
+          <input type="text" id="equipName" placeholder="例: Sony α7 IV" />
+        </label>
+        <label class="simple-field">
+          <span>仕様 (任意)</span>
+          <input type="text" id="equipSpec" placeholder="例: ボディのみ、SDカード付き" />
+        </label>
+        <div class="simple-actions">
+          <button type="button" id="scanEquipQrBtn" class="ghost">📷 QR をスキャンして転記</button>
+          <button type="button" id="equipSaveBtn" class="primary">登録 / 更新</button>
+        </div>
+        <h3>登録済機材</h3>
+        <ul id="equipList" class="equip-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
