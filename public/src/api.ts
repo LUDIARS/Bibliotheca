@@ -104,10 +104,27 @@ export const api = {
   listEquipment: () =>
     req<{ items: EquipmentRow[] }>('/api/items/equipment'),
   registerEquipment: (qr_code: string, name: string, spec: string | null) =>
-    req<{ equipment: EquipmentRow }>('/api/items/equipment', {
+    req<{ equipment: EquipmentRow; generated_qr: boolean }>('/api/items/equipment', {
       method: 'POST',
       body: JSON.stringify({ qr_code, name, spec }),
     }),
+  bulkEquipment: (items: Array<{ qr_code?: string; name: string; spec?: string | null }>) =>
+    req<{
+      ok: number;
+      errors: number;
+      results: Array<
+        | { ok: true; equipment: EquipmentRow; generated_qr: boolean }
+        | { ok: false; index: number; error: string }
+      >;
+    }>('/api/items/equipment/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
+  bulkBooks: (isbns: string[]) =>
+    req<{ ok: number; total: number; results: Array<{ isbn: string; ok: boolean; title?: string }> }>(
+      '/api/items/books/bulk',
+      { method: 'POST', body: JSON.stringify({ isbns }) },
+    ),
   borrow: (
     source: 'book' | 'equipment',
     external_key: string,

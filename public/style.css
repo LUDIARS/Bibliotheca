@@ -310,9 +310,46 @@ button {
   gap: 8px;
 }
 
+.equip-item { display: flex; gap: 10px; align-items: flex-start; }
+.equip-item .body { flex: 1; min-width: 0; }
 .equip-item .name { font-weight: 600; }
 .equip-item .qr { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
 .equip-item .spec { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.equip-item .pick { padding-top: 2px; }
+.equip-item .pick input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+.bulk-preview {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.bulk-preview:empty { display: none; }
+.bulk-preview ul { list-style: none; margin: 0; padding: 0; }
+.bulk-preview li { padding: 2px 0; }
+.bulk-preview li.err { color: var(--danger); }
+.bulk-preview li.ok { color: var(--success); }
+.bulk-preview .summary { margin-bottom: 6px; font-weight: 600; }
+
+textarea {
+  width: 100%;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
 
 .toggle {
   display: inline-flex;

@@ -95,12 +95,12 @@
       <div class="panel foundation-form">
         <h2>機材マスタ登録</h2>
         <p class="muted">
-          機材のマスタ DB が無い間は、 ここで QR + 名前 + 仕様を登録します。
-          登録済の QR でないと貸出できません。
+          QR を未入力にすると <code>BB-XXXXXXXXXX</code> 形式で自動発行されます。
+          登録済の機材は QR スキャンで貸出可能。
         </p>
         <label class="simple-field">
-          <span>QR コード</span>
-          <input type="text" id="equipQr" placeholder="QR をスキャンして取得した文字列" />
+          <span>QR コード (未入力で自動発行)</span>
+          <input type="text" id="equipQr" placeholder="未入力でも OK — BB-XXXXXX を自動発行" />
         </label>
         <label class="simple-field">
           <span>名前</span>
@@ -114,7 +114,33 @@
           <button type="button" id="scanEquipQrBtn" class="ghost">📷 QR をスキャンして転記</button>
           <button type="button" id="equipSaveBtn" class="primary">登録 / 更新</button>
         </div>
-        <h3>登録済機材</h3>
+
+        <h3>📦 機材 — CSV 一括登録</h3>
+        <p class="muted">
+          1 行 1 機材、 <code>qr_code,name,spec</code> の順 (タブ or カンマ区切り)。 1 列目空欄で QR 自動発行。
+        </p>
+        <textarea id="bulkEquipText" rows="6" placeholder=",Nikon Z6,SDカード付き&#10;BB-CAMERATRIPOD,三脚,Manfrotto&#10;,リング照明 18inch,"></textarea>
+        <div class="simple-actions">
+          <button type="button" id="bulkEquipPreviewBtn" class="ghost">プレビュー</button>
+          <button type="button" id="bulkEquipSubmitBtn" class="primary">一括登録</button>
+        </div>
+        <div id="bulkEquipPreview" class="bulk-preview"></div>
+
+        <h3>📖 書籍 — ISBN 一括キャッシュ</h3>
+        <p class="muted">
+          1 行 1 ISBN を OpenBD で予め取得してキャッシュ。 当日のスキャンが速くなる。
+        </p>
+        <textarea id="bulkBooksText" rows="4" placeholder="9784101001029&#10;9784167108014&#10;9784087461237"></textarea>
+        <div class="simple-actions">
+          <button type="button" id="bulkBooksSubmitBtn" class="primary">キャッシュ取得</button>
+        </div>
+        <div id="bulkBooksResult" class="bulk-preview"></div>
+
+        <h3>🏷 登録済機材 (QR ラベル印刷可)</h3>
+        <div class="simple-actions" style="justify-content: flex-start; margin-bottom: 8px;">
+          <button type="button" id="printAllQrBtn" class="ghost">🖨 すべての QR ラベルを印刷</button>
+          <button type="button" id="printSelectedQrBtn" class="ghost" disabled>🖨 選択した QR を印刷 (<span id="qrSelectedCount">0</span>)</button>
+        </div>
         <ul id="equipList" class="equip-list"></ul>
       </div>
     </section>

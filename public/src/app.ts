@@ -13,6 +13,7 @@ import {
   type MeResponse,
 } from './api.ts';
 import { startScan, stopScan, type ScanMode } from './scanner.ts';
+import { openPrintWindow, type QrLabel } from './qr.ts';
 
 type View = 'borrow' | 'mine' | 'open' | 'admin';
 
@@ -328,24 +329,37 @@ async function onReturn(loanId: number, btn: HTMLButtonElement): Promise<void> {
 }
 
 // ── Admin (equipment master) view ───────────────────────
+const adminState = {
+  cachedEquip: [] as Array<{ qr_code: string; name: string; spec: string | null }>,
+  selected: new Set<string>(),
+};
+
 function wireAdminView(): void {
   $('#scanEquipQrBtn').addEventListener('click', () =>
     void openScanner('qr', 'equipQr', 'equipment'),
   );
   $('#equipSaveBtn').addEventListener('click', () => void onSaveEquipment());
+  $('#bulkEquipPreviewBtn').addEventListener('click', () => onBulkEquipPreview());
+  $('#bulkEquipSubmitBtn').addEventListener('click', () => void onBulkEquipSubmit());
+  $('#bulkBooksSubmitBtn').addEventListener('click', () => void onBulkBooksSubmit());
+  $('#printAllQrBtn').addEventListener('click', () => void onPrintAllQr());
+  $('#printSelectedQrBtn').addEventListener('click', () => void onPrintSelectedQr());
 }
 
 async function onSaveEquipment(): Promise<void> {
   const qr = ($('#equipQr') as HTMLInputElement).value.trim();
   const name = ($('#equipName') as HTMLInputElement).value.trim();
   const spec = ($('#equipSpec') as HTMLInputElement).value.trim() || null;
-  if (!qr || !name) {
-    showToast('QR と 名前は必須です', 'err');
+  if (!name) {
+    showToast('名前は必須です', 'err');
     return;
   }
   try {
-    await api.registerEquipment(qr, name, spec);
-    showToast('機材を登録しました', 'ok');
+    const res = await api.registerEquipment(qr, name, spec);
+    showToast(
+      res.generated_qr ? `機材を登録しました (QR: ${res.equipment.qr_code} を発行)` : '機材を登録しました',
+      'ok',
+    );
     ($('#equipQr') as HTMLInputElement).value = '';
     ($('#equipName') as HTMLInputElement).value = '';
     ($('#equipSpec') as HTMLInputElement).value = '';
@@ -360,11 +374,142 @@ async function onSaveEquipment(): Promise<void> {
   }
 }
 
+// ── CSV / 改行入力をパースする ───────────────────────────
+interface ParsedRow {
+  qr_code: string;
+  name: string;
+  spec: string | null;
+}
+function parseBulkEquip(text: string): { rows: ParsedRow[]; errors: string[] } {
+  const rows: ParsedRow[] = [];
+  const errors: string[] = [];
+  const lines = text.split(/\r?\n/);
+  lines.forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line) return;
+    // タブ or カンマ。 タブ区切り Excel コピペにも対応
+    const parts = line.split(/\t|,/).map((s) => s.trim());
+    const qr = parts[0] ?? '';
+    const name = parts[1] ?? '';
+    const spec = (parts[2] ?? '').trim();
+    if (!name) {
+      errors.push(`${i + 1} 行目: name が空 (${raw.slice(0, 40)})`);
+      return;
+    }
+    rows.push({ qr_code: qr, name, spec: spec || null });
+  });
+  return { rows, errors };
+}
+
+function onBulkEquipPreview(): void {
+  const text = ($('#bulkEquipText') as HTMLTextAreaElement).value;
+  const { rows, errors } = parseBulkEquip(text);
+  const preview = $('#bulkEquipPreview');
+  const lines: string[] = [];
+  lines.push(`<div class="summary">${rows.length} 件 (パースエラー ${errors.length})</div>`);
+  if (errors.length > 0) {
+    lines.push('<ul>' + errors.slice(0, 10).map((e) => `<li class="err">${escapeHtml(e)}</li>`).join('') + '</ul>');
+  }
+  if (rows.length > 0) {
+    lines.push('<ul>' + rows.slice(0, 10).map((r) =>
+      `<li>${r.qr_code ? escapeHtml(r.qr_code) : '<em>(自動発行)</em>'} — ${escapeHtml(r.name)}${r.spec ? ' / ' + escapeHtml(r.spec) : ''}</li>`,
+    ).join('') + (rows.length > 10 ? `<li>... 他 ${rows.length - 10} 件</li>` : '') + '</ul>');
+  }
+  preview.innerHTML = lines.join('');
+}
+
+async function onBulkEquipSubmit(): Promise<void> {
+  const text = ($('#bulkEquipText') as HTMLTextAreaElement).value;
+  const { rows, errors } = parseBulkEquip(text);
+  if (rows.length === 0) {
+    showToast('登録対象がありません', 'err');
+    return;
+  }
+  if (errors.length > 0 && !confirm(`${errors.length} 件のパースエラーがあります。 残り ${rows.length} 件を登録しますか?`)) {
+    return;
+  }
+  try {
+    const res = await api.bulkEquipment(rows);
+    showToast(`一括登録: 成功 ${res.ok} / 失敗 ${res.errors}`, res.errors === 0 ? 'ok' : 'err');
+    ($('#bulkEquipText') as HTMLTextAreaElement).value = '';
+    $('#bulkEquipPreview').innerHTML = '';
+    void renderEquipList();
+  } catch (e) {
+    const err = e as { status?: number };
+    showToast(err.status === 403 ? '管理者のみ登録できます' : '一括登録に失敗しました', 'err');
+  }
+}
+
+async function onBulkBooksSubmit(): Promise<void> {
+  const text = ($('#bulkBooksText') as HTMLTextAreaElement).value;
+  const isbns = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (isbns.length === 0) {
+    showToast('ISBN がありません', 'err');
+    return;
+  }
+  const resultEl = $('#bulkBooksResult');
+  resultEl.innerHTML = '<div class="muted">取得中…</div>';
+  try {
+    const res = await api.bulkBooks(isbns);
+    const lines: string[] = [];
+    lines.push(`<div class="summary">${res.ok} / ${res.total} 件キャッシュ済</div>`);
+    lines.push('<ul>' + res.results.map((r) =>
+      r.ok
+        ? `<li class="ok">✓ ${escapeHtml(r.isbn)} — ${escapeHtml(r.title ?? '')}</li>`
+        : `<li class="err">× ${escapeHtml(r.isbn)} — 見つかりませんでした</li>`,
+    ).join('') + '</ul>');
+    resultEl.innerHTML = lines.join('');
+    showToast(`書籍キャッシュ: ${res.ok} / ${res.total}`, res.ok === res.total ? 'ok' : '');
+  } catch (e) {
+    const err = e as { status?: number };
+    resultEl.innerHTML = '';
+    showToast(err.status === 403 ? '管理者のみ実行できます' : 'キャッシュ取得に失敗しました', 'err');
+  }
+}
+
+async function onPrintAllQr(): Promise<void> {
+  if (adminState.cachedEquip.length === 0) {
+    showToast('印刷対象がありません', 'err');
+    return;
+  }
+  await openPrintWindow(adminState.cachedEquip.map((e): QrLabel => ({
+    qrCode: e.qr_code,
+    name: e.name,
+    spec: e.spec,
+  })));
+}
+
+async function onPrintSelectedQr(): Promise<void> {
+  const targets = adminState.cachedEquip.filter((e) => adminState.selected.has(e.qr_code));
+  if (targets.length === 0) {
+    showToast('印刷対象がありません', 'err');
+    return;
+  }
+  await openPrintWindow(targets.map((e): QrLabel => ({
+    qrCode: e.qr_code,
+    name: e.name,
+    spec: e.spec,
+  })));
+}
+
+function updateSelectedCount(): void {
+  ($('#qrSelectedCount') as HTMLSpanElement).textContent = String(adminState.selected.size);
+  ($('#printSelectedQrBtn') as HTMLButtonElement).disabled = adminState.selected.size === 0;
+}
+
 async function renderEquipList(): Promise<void> {
   const list = $('#equipList') as HTMLUListElement;
   list.innerHTML = '<li class="muted">読み込み中…</li>';
   try {
     const { items } = await api.listEquipment();
+    adminState.cachedEquip = items.map((e) => ({ qr_code: e.qr_code, name: e.name, spec: e.spec }));
+    // 既に選択されていた qr_code は維持、 もう存在しないものは捨てる
+    const validKeys = new Set(items.map((e) => e.qr_code));
+    for (const k of Array.from(adminState.selected)) {
+      if (!validKeys.has(k)) adminState.selected.delete(k);
+    }
+    updateSelectedCount();
+
     list.innerHTML = '';
     if (items.length === 0) {
       list.innerHTML = '<li class="muted">登録された機材はありません</li>';
@@ -373,11 +518,21 @@ async function renderEquipList(): Promise<void> {
     for (const e of items) {
       const li = document.createElement('li');
       li.className = 'equip-item';
+      const checked = adminState.selected.has(e.qr_code) ? 'checked' : '';
       li.innerHTML = `
-        <div class="name">${escapeHtml(e.name)}</div>
-        ${e.spec ? `<div class="spec">${escapeHtml(e.spec)}</div>` : ''}
-        <div class="qr">QR: ${escapeHtml(e.qr_code)}</div>
+        <div class="pick"><input type="checkbox" data-qr="${escapeHtml(e.qr_code)}" ${checked} /></div>
+        <div class="body">
+          <div class="name">${escapeHtml(e.name)}</div>
+          ${e.spec ? `<div class="spec">${escapeHtml(e.spec)}</div>` : ''}
+          <div class="qr">QR: ${escapeHtml(e.qr_code)}</div>
+        </div>
       `;
+      const cb = li.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      cb.addEventListener('change', () => {
+        if (cb.checked) adminState.selected.add(e.qr_code);
+        else adminState.selected.delete(e.qr_code);
+        updateSelectedCount();
+      });
       list.appendChild(li);
     }
   } catch {
