@@ -34,7 +34,9 @@ interface AuthOptions {
 let optsRef: AuthOptions | null = null;
 
 export function startAuth(opts: AuthOptions): void {
-  optsRef = opts;
+  // baseUrl の trailing slash を削る (= 後段の `+ /.well-known/...` で double slash を作らない、
+  // Cloudflare Tunnel + Vite proxy 構成で `//.well-known/...` は SPA fallback になり HTML が返る)
+  optsRef = { ...opts, cernereBaseUrl: opts.cernereBaseUrl.replace(/\/+$/, '') };
   void refreshPublicKeys();
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(() => void refreshPublicKeys(), REFRESH_INTERVAL_MS);

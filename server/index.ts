@@ -25,15 +25,31 @@ import { makeMeRouter } from './routes/me.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/** 必須 env を取り出す。 未設定なら落とす (= localhost 等の暗黙 fallback は禁止)。 */
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v || !v.trim()) {
+    console.error(
+      `[bibliotheca] ${name} が未設定です。 Infisical / .env.secrets / .env / host env のいずれかで指定してください。`,
+    );
+    process.exit(1);
+  }
+  return v.trim();
+}
+
+// listen port / data dir は値が無くてもサービスとして成立するので default 容認 (= 純粋な dev utility)
 const PORT = Number(process.env.BIBLIOTHECA_PORT ?? 17501);
 const DATA_DIR = resolve(
-  process.env.BIBLIOTHECA_DATA ?? join(__dirname, '..', 'data'),
+  process.env.BIBLIOTHECA_DATA && process.env.BIBLIOTHECA_DATA.trim()
+    ? process.env.BIBLIOTHECA_DATA
+    : join(__dirname, '..', 'data'),
 );
 const DB_PATH = join(DATA_DIR, 'bibliotheca.db');
-const CERNERE_BASE_URL =
-  process.env.CERNERE_BASE_URL ?? 'http://localhost:8080';
-const AUDIENCE =
-  process.env.BIBLIOTHECA_PUBLIC_URL ?? `http://localhost:${PORT}`;
+
+// 認証系は必須 — 不正な値で起動して全リクエスト 401 になるより、 起動を止める
+const CERNERE_BASE_URL = requireEnv('CERNERE_BASE_URL');
+const AUDIENCE = requireEnv('BIBLIOTHECA_PUBLIC_URL');
+
 const ADMIN_IDS = new Set(
   (process.env.BIBLIOTHECA_ADMIN_IDS ?? '')
     .split(',')
@@ -78,5 +94,7 @@ app.notFound((c) => {
 serve({ fetch: app.fetch, port: PORT }, (info) => {
   console.log(`[bibliotheca] listening on http://localhost:${info.port}`);
   console.log(`[bibliotheca] data dir: ${DATA_DIR}`);
+  console.log(`[bibliotheca] cernere: ${CERNERE_BASE_URL}`);
+  console.log(`[bibliotheca] audience: ${AUDIENCE}`);
   console.log(`[bibliotheca] admin user ids: ${ADMIN_IDS.size}`);
 });
