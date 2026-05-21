@@ -22,6 +22,7 @@ import { LocalEquipmentSource } from './master/local-equipment.ts';
 import { makeItemRouter } from './routes/items.ts';
 import { makeLoanRouter } from './routes/loans.ts';
 import { makeMeRouter } from './routes/me.ts';
+import { corpusManifest, CORPUS_MANIFEST_PATH } from './corpus.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -76,25 +77,11 @@ app.get('/api/health', (c) =>
   c.json({ ok: true, service: 'bibliotheca', port: PORT }),
 );
 
-// Corpus hub 用サービスマニフェスト (VantanHub-DESIGN.md D6)。 認証不要。
-// Corpus がこれを読んで集約データ / UI パネルを把握する。 panel の実体は
-// `public/corpus-ui/loans.js` (build:corpus-ui で生成、 serveStatic が配信)。
-app.get('/.well-known/corpus-service.json', (c) =>
-  c.json({
-    service: 'bibliotheca',
-    displayName: 'Bibliotheca',
-    version: '0.1.0',
-    corpusApi: 1,
-    health: '/api/health',
-    data: [
-      { id: 'my-loans', title: '自分の貸出', path: '/api/loans/mine', scope: 'multi' },
-      { id: 'open-loans', title: '貸出中一覧', path: '/api/loans/open', scope: 'multi' },
-    ],
-    panels: [{ id: 'loans', title: '貸出', icon: '📚', entry: 'loans.js' }],
-    auth: 'cernere-project-token',
-    cernereProjectKey: 'bibliotheca',
-  }),
-);
+// Corpus hub 用サービスマニフェスト (認証不要)。 Corpus DESIGN.md §13 の
+// declarative panel に移行 — UI を JSON descriptor で宣言し Corpus 内蔵
+// レンダラが描画する。 中身は server/corpus.ts。
+// 注: 旧 script panel (`corpus-ui/loans.ts` + build:corpus-ui) は superseded。
+app.get(CORPUS_MANIFEST_PATH, (c) => c.json(corpusManifest));
 
 app.route('/api/me', makeMeRouter());
 app.route('/api/items', makeItemRouter(db, master));
