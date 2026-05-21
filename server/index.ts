@@ -76,6 +76,26 @@ app.get('/api/health', (c) =>
   c.json({ ok: true, service: 'bibliotheca', port: PORT }),
 );
 
+// Corpus hub 用サービスマニフェスト (VantanHub-DESIGN.md D6)。 認証不要。
+// Corpus がこれを読んで集約データ / UI パネルを把握する。 panel の実体は
+// `public/corpus-ui/loans.js` (build:corpus-ui で生成、 serveStatic が配信)。
+app.get('/.well-known/corpus-service.json', (c) =>
+  c.json({
+    service: 'bibliotheca',
+    displayName: 'Bibliotheca',
+    version: '0.1.0',
+    corpusApi: 1,
+    health: '/api/health',
+    data: [
+      { id: 'my-loans', title: '自分の貸出', path: '/api/loans/mine', scope: 'multi' },
+      { id: 'open-loans', title: '貸出中一覧', path: '/api/loans/open', scope: 'multi' },
+    ],
+    panels: [{ id: 'loans', title: '貸出', icon: '📚', entry: 'loans.js' }],
+    auth: 'cernere-project-token',
+    cernereProjectKey: 'bibliotheca',
+  }),
+);
+
 app.route('/api/me', makeMeRouter());
 app.route('/api/items', makeItemRouter(db, master));
 app.route('/api/loans', makeLoanRouter(db, master));
