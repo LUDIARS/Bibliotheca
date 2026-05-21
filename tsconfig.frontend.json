@@ -13,6 +13,6 @@
     "isolatedModules": true,
     "types": []
   },
-  "include": ["public/src/**/*.ts"],
+  "include": ["public/src/**/*.ts", "corpus-ui/**/*.ts"],
   "exclude": ["node_modules"]
 }
