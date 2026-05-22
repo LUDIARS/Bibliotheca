@@ -78,9 +78,8 @@ app.get('/api/health', (c) =>
 );
 
 // Corpus hub 用サービスマニフェスト (認証不要)。 Corpus DESIGN.md §13 の
-// declarative panel に移行 — UI を JSON descriptor で宣言し Corpus 内蔵
-// レンダラが描画する。 中身は server/corpus.ts。
-// 注: 旧 script panel (`corpus-ui/loans.ts` + build:corpus-ui) は superseded。
+// declarative panel — UI を JSON descriptor で宣言し Corpus 内蔵レンダラが
+// 描画する。 中身は server/corpus.ts。
 app.get(CORPUS_MANIFEST_PATH, (c) => c.json(corpusManifest));
 
 app.route('/api/me', makeMeRouter());
