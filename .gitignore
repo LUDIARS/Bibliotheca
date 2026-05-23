@@ -2,6 +2,8 @@ node_modules/
 data/
 public/app.js
 public/app.js.map
+public/declarative.js
+public/declarative.js.map
 public/corpus-ui/
 .env
 .env.local
