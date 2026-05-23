@@ -9,6 +9,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { secureHeaders } from 'hono/secure-headers';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { dirname, join, resolve } from 'node:path';
@@ -71,6 +72,17 @@ const master = new CompositeMasterSource(
 );
 
 const app = new Hono();
+// セキュリティヘッダ (HSTS / X-Content-Type-Options / X-Frame-Options / Referrer-Policy 等)。
+// クロスオリジン分離系 (COOP / COEP / CORP) は Cernere SSO ポップアップや Corpus パネル
+// 連携を壊しうるため無効化し、 副作用のない古典的なヘッダのみを付与する。
+app.use(
+  '*',
+  secureHeaders({
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: false,
+  }),
+);
 app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'OPTIONS'] }));
 
 app.get('/api/health', (c) =>
