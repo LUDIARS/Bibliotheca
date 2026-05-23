@@ -23,6 +23,7 @@ import { LocalEquipmentSource } from './master/local-equipment.ts';
 import { makeItemRouter } from './routes/items.ts';
 import { makeLoanRouter } from './routes/loans.ts';
 import { makeMeRouter } from './routes/me.ts';
+import { makeReturnRouter } from './routes/returns.ts';
 import { corpusManifest, CORPUS_MANIFEST_PATH } from './corpus.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -97,6 +98,7 @@ app.get(CORPUS_MANIFEST_PATH, (c) => c.json(corpusManifest));
 app.route('/api/me', makeMeRouter());
 app.route('/api/items', makeItemRouter(db, master));
 app.route('/api/loans', makeLoanRouter(db, master));
+app.route('/api/returns', makeReturnRouter(db, master));
 
 // serveStatic は cwd 相対なので、 npm scripts は repo root から起動する前提。
 app.use('/*', serveStatic({ root: './public' }));

@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Bibliotheca" />
   <title>Bibliotheca</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="style.css?v=20260516a" />
+  <link rel="stylesheet" href="style.css?v=20260523a" />
 </head>
 <body>
   <header class="topbar">
@@ -73,6 +73,17 @@
 
     <!-- ── 自分の貸出 ────────────────────────────────────────── -->
     <section class="view" data-view="mine" hidden>
+      <div class="panel return-qr-block" id="returnQrBlock">
+        <h2>📱 返却 QR</h2>
+        <p class="muted">admin にこの QR を見せると、 貸出中のものを返却できます。</p>
+        <div class="return-qr-display">
+          <div class="return-qr-svg" id="returnQrSvg"></div>
+          <div class="return-qr-info">
+            <div><strong id="returnQrCountdown">--</strong> 秒で更新</div>
+            <button type="button" id="returnQrRefreshBtn" class="ghost">手動で更新</button>
+          </div>
+        </div>
+      </div>
       <div class="panel">
         <h2>自分が借りているもの</h2>
         <label class="toggle">
@@ -142,6 +153,29 @@
           <button type="button" id="printSelectedQrBtn" class="ghost" disabled>🖨 選択した QR を印刷 (<span id="qrSelectedCount">0</span>)</button>
         </div>
         <ul id="equipList" class="equip-list"></ul>
+      </div>
+
+      <div class="panel foundation-form">
+        <h3>📷 返却ランデブー</h3>
+        <p class="muted">ゲストが「自分の貸出」 タブで表示している QR をスキャンします。</p>
+        <div class="simple-actions" style="justify-content: flex-start;">
+          <button type="button" id="adminReturnScanBtn" class="primary">📷 返却 QR をスキャン</button>
+        </div>
+        <div id="adminReturnScannerArea" class="scanner-area" hidden>
+          <video id="adminReturnVideo" autoplay muted playsinline></video>
+          <div class="scanner-actions">
+            <span id="adminReturnScannerHint">ゲスト画面の QR をカメラに写してください</span>
+            <button type="button" id="adminReturnScannerCancel" class="ghost">キャンセル</button>
+          </div>
+        </div>
+        <div id="adminReturnResult" class="return-result" hidden>
+          <p><strong id="adminReturnBorrower"></strong> の貸出中アイテム:</p>
+          <ul id="adminReturnLoanList" class="return-loan-list"></ul>
+          <div class="simple-actions">
+            <button type="button" id="adminReturnConfirmBtn" class="primary" disabled>選択したものを返却</button>
+            <button type="button" id="adminReturnResetBtn" class="ghost">キャンセル</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>

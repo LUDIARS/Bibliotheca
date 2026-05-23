@@ -13,7 +13,7 @@ import {
   type MeResponse,
 } from './api.ts';
 import { startScan, stopScan, type ScanMode } from './scanner.ts';
-import { openPrintWindow, type QrLabel } from './qr.ts';
+import { openPrintWindow, renderQrSvg, type QrLabel } from './qr.ts';
 
 type View = 'borrow' | 'mine' | 'open' | 'admin';
 
@@ -55,7 +55,12 @@ function selectView(view: View): void {
   for (const v of $$('.view')) {
     (v as HTMLElement).hidden = v.dataset.view !== view;
   }
-  if (view === 'mine') void renderMine();
+  if (view === 'mine') {
+    void renderMine();
+    void refreshReturnQr();
+  } else {
+    stopReturnQrTimers();
+  }
   if (view === 'open') void renderOpen();
   if (view === 'admin') void renderEquipList();
 }
@@ -95,6 +100,8 @@ async function init(): Promise<void> {
   wireBorrowView();
   wireAdminView();
   wireMineToggle();
+  wireMineReturnQr();
+  wireAdminReturnScan();
 }
 
 function showLoginPrompt(): void {
@@ -538,6 +545,178 @@ async function renderEquipList(): Promise<void> {
   } catch {
     list.innerHTML = '<li class="muted">読み込みに失敗しました</li>';
   }
+}
+
+// ── 返却 QR (ゲスト側) ──────────────────────────────────
+const returnQrState = {
+  token: null as string | null,
+  expiresAt: 0,
+  refreshTimer: 0,
+  countdownTimer: 0,
+};
+
+function stopReturnQrTimers(): void {
+  if (returnQrState.refreshTimer) {
+    clearTimeout(returnQrState.refreshTimer);
+    returnQrState.refreshTimer = 0;
+  }
+  if (returnQrState.countdownTimer) {
+    clearInterval(returnQrState.countdownTimer);
+    returnQrState.countdownTimer = 0;
+  }
+}
+
+async function refreshReturnQr(): Promise<void> {
+  stopReturnQrTimers();
+  const svgHost = $('#returnQrSvg');
+  const countdownEl = $('#returnQrCountdown');
+  svgHost.innerHTML = '<span class="muted">発行中…</span>';
+  try {
+    const { token, expiresAt } = await api.issueReturnToken();
+    returnQrState.token = token;
+    returnQrState.expiresAt = new Date(expiresAt).getTime();
+    const svg = await renderQrSvg(token);
+    svgHost.innerHTML = svg;
+    // 期限の 10s 前に自動再発行
+    const ttlMs = Math.max(returnQrState.expiresAt - Date.now(), 5_000);
+    returnQrState.refreshTimer = window.setTimeout(
+      () => void refreshReturnQr(),
+      Math.max(ttlMs - 10_000, 5_000),
+    );
+    returnQrState.countdownTimer = window.setInterval(() => {
+      if (state.view !== 'mine') {
+        stopReturnQrTimers();
+        return;
+      }
+      const remaining = Math.max(0, Math.ceil((returnQrState.expiresAt - Date.now()) / 1000));
+      countdownEl.textContent = String(remaining);
+    }, 500);
+  } catch {
+    svgHost.innerHTML = '<span class="muted">QR 発行に失敗しました</span>';
+    countdownEl.textContent = '--';
+  }
+}
+
+function wireMineReturnQr(): void {
+  const btn = $('#returnQrRefreshBtn');
+  btn.addEventListener('click', () => void refreshReturnQr());
+}
+
+// ── 返却ランデブー (admin 側) ──────────────────────────
+const adminReturnState = {
+  token: null as string | null,
+  selectedLoanIds: new Set<number>(),
+  loans: [] as LoanView[],
+};
+
+function wireAdminReturnScan(): void {
+  $('#adminReturnScanBtn').addEventListener('click', () => void openAdminReturnScanner());
+  $('#adminReturnScannerCancel').addEventListener('click', () => void closeAdminReturnScanner());
+  $('#adminReturnConfirmBtn').addEventListener('click', () => void confirmAdminReturn());
+  $('#adminReturnResetBtn').addEventListener('click', () => resetAdminReturnResult());
+}
+
+async function openAdminReturnScanner(): Promise<void> {
+  resetAdminReturnResult();
+  const area = $('#adminReturnScannerArea') as HTMLElement;
+  const video = $('#adminReturnVideo') as HTMLVideoElement;
+  area.hidden = false;
+  try {
+    await startScan(video, 'qr' as ScanMode, (text) => {
+      void onAdminReturnScanned(text);
+    });
+  } catch {
+    showToast('カメラを起動できませんでした', 'err');
+    area.hidden = true;
+  }
+}
+
+async function closeAdminReturnScanner(): Promise<void> {
+  await stopScan();
+  ($('#adminReturnScannerArea') as HTMLElement).hidden = true;
+}
+
+async function onAdminReturnScanned(text: string): Promise<void> {
+  // 1 回読めたら止める (連続発火を避ける)
+  await closeAdminReturnScanner();
+  try {
+    const res = await api.lookupReturnToken(text.trim());
+    adminReturnState.token = text.trim();
+    adminReturnState.loans = res.openLoans;
+    adminReturnState.selectedLoanIds.clear();
+    renderAdminReturnList(res.borrower);
+  } catch (e) {
+    const err = e as { status?: number; body?: { error?: string } };
+    if (err.status === 404) {
+      showToast('QR が無効または期限切れです', 'err');
+    } else {
+      showToast(`スキャン結果の解決に失敗しました (${err.body?.error ?? err.status ?? '?'})`, 'err');
+    }
+  }
+}
+
+function renderAdminReturnList(
+  borrower: { userId: string; displayName: string | null },
+): void {
+  const wrap = $('#adminReturnResult') as HTMLElement;
+  const nameEl = $('#adminReturnBorrower');
+  const list = $('#adminReturnLoanList') as HTMLUListElement;
+  const btn = $('#adminReturnConfirmBtn') as HTMLButtonElement;
+
+  nameEl.textContent =
+    borrower.displayName ?? `user-${borrower.userId.slice(0, 8)}`;
+  list.innerHTML = '';
+  if (adminReturnState.loans.length === 0) {
+    list.innerHTML = '<li class="muted">貸出中のアイテムはありません</li>';
+    btn.disabled = true;
+  } else {
+    for (const loan of adminReturnState.loans) {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <label class="loan-pick">
+          <input type="checkbox" data-loan-id="${loan.id}" />
+          <span>
+            <strong>${escapeHtml(loan.label ?? loan.external_key)}</strong>
+            <small>${loan.source === 'book' ? '📖 本' : '🔧 機材'} ・ ${escapeHtml(loan.external_key)}</small>
+            <small>${fmtDate(loan.borrowed_at)} に貸出</small>
+          </span>
+        </label>
+      `;
+      const cb = li.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      cb.addEventListener('change', () => {
+        if (cb.checked) adminReturnState.selectedLoanIds.add(loan.id);
+        else adminReturnState.selectedLoanIds.delete(loan.id);
+        btn.disabled = adminReturnState.selectedLoanIds.size === 0;
+      });
+      list.appendChild(li);
+    }
+    btn.disabled = true;
+  }
+  wrap.hidden = false;
+}
+
+async function confirmAdminReturn(): Promise<void> {
+  if (!adminReturnState.token) return;
+  const ids = Array.from(adminReturnState.selectedLoanIds);
+  if (ids.length === 0) return;
+  try {
+    const res = await api.confirmReturnBatch(adminReturnState.token, ids);
+    showToast(
+      `${res.returned.length} 件を返却しました${res.skipped.length ? ` (スキップ ${res.skipped.length})` : ''}`,
+      'ok',
+    );
+    resetAdminReturnResult();
+  } catch (e) {
+    const err = e as { status?: number; body?: { error?: string } };
+    showToast(`返却に失敗しました (${err.body?.error ?? err.status ?? '?'})`, 'err');
+  }
+}
+
+function resetAdminReturnResult(): void {
+  adminReturnState.token = null;
+  adminReturnState.loans = [];
+  adminReturnState.selectedLoanIds.clear();
+  ($('#adminReturnResult') as HTMLElement).hidden = true;
 }
 
 // ── helpers ─────────────────────────────────────────────

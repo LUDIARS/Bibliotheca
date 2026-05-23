@@ -144,4 +144,29 @@ export const api = {
     req<{ items: LoanView[] }>(
       `/api/loans/mine${includeReturned ? '?all=1' : ''}`,
     ),
+
+  // ── 返却ランデブー (ゲスト QR 発行 + admin スキャン) ──────────
+  issueReturnToken: () =>
+    req<{ token: string; expiresAt: string; ttlSeconds: number }>(
+      '/api/returns/token',
+      { method: 'POST' },
+    ),
+  lookupReturnToken: (token: string) =>
+    req<{
+      borrower: { userId: string; displayName: string | null };
+      tokenExpiresAt: string;
+      openLoans: LoanView[];
+    }>('/api/returns/lookup', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+  confirmReturnBatch: (token: string, loanIds: number[]) =>
+    req<{
+      returned: LoanView[];
+      skipped: number[];
+      tokenConsumed: boolean;
+    }>('/api/returns/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ token, loanIds }),
+    }),
 };

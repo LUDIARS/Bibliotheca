@@ -80,8 +80,81 @@ export function openDb(dbPath: string): Database.Database {
       fetched_at TEXT NOT NULL,
       PRIMARY KEY (source, external_key)
     );
+
+    -- 返却ランデブー: ゲストが発行する短命 token を保管。
+    -- admin がスキャンした QR の正当性検証と単回消費に使う。
+    CREATE TABLE IF NOT EXISTS return_token (
+      token        TEXT PRIMARY KEY,
+      user_id      TEXT NOT NULL,
+      display_name TEXT,
+      issued_at    TEXT NOT NULL,
+      expires_at   TEXT NOT NULL,
+      consumed_at  TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_return_token_user
+      ON return_token(user_id, expires_at);
   `);
   return db;
+}
+
+// ── Return tokens (rendezvous) ─────────────────────────────────────────────
+
+export interface ReturnTokenRow {
+  token: string;
+  user_id: string;
+  display_name: string | null;
+  issued_at: string;
+  expires_at: string;
+  consumed_at: string | null;
+}
+
+export function issueReturnToken(
+  db: Database.Database,
+  args: { token: string; userId: string; displayName: string | null; ttlSeconds: number },
+): ReturnTokenRow {
+  const now = new Date();
+  const expires = new Date(now.getTime() + args.ttlSeconds * 1000);
+  db.prepare(
+    `INSERT INTO return_token(token, user_id, display_name, issued_at, expires_at, consumed_at)
+     VALUES (?, ?, ?, ?, ?, NULL)`,
+  ).run(args.token, args.userId, args.displayName, now.toISOString(), expires.toISOString());
+  return db
+    .prepare<[string], ReturnTokenRow>(`SELECT * FROM return_token WHERE token = ?`)
+    .get(args.token) as ReturnTokenRow;
+}
+
+/** 有効 (未期限切れ + 未消費) なトークンを返す。 そうでなければ null。 */
+export function findValidReturnToken(
+  db: Database.Database,
+  token: string,
+): ReturnTokenRow | null {
+  const row = db
+    .prepare<[string], ReturnTokenRow>(`SELECT * FROM return_token WHERE token = ?`)
+    .get(token);
+  if (!row) return null;
+  if (row.consumed_at) return null;
+  if (new Date(row.expires_at).getTime() < Date.now()) return null;
+  return row;
+}
+
+export function consumeReturnToken(db: Database.Database, token: string): boolean {
+  const now = new Date().toISOString();
+  const info = db
+    .prepare(
+      `UPDATE return_token SET consumed_at = ?
+         WHERE token = ? AND consumed_at IS NULL AND expires_at > ?`,
+    )
+    .run(now, token, now);
+  return info.changes > 0;
+}
+
+/** 期限切れ token を掃除する (cron 不要、 起動時に 1 回 + endpoint 突入時に 1 回呼ぶ)。 */
+export function pruneExpiredReturnTokens(db: Database.Database): number {
+  const now = new Date().toISOString();
+  const info = db
+    .prepare(`DELETE FROM return_token WHERE expires_at < ? AND (consumed_at IS NULL OR consumed_at < ?)`)
+    .run(now, now);
+  return info.changes;
 }
 
 // ── Loan operations ────────────────────────────────────────────────────────
