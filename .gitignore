@@ -12,3 +12,6 @@ public/corpus-ui/
 *.log
 .DS_Store
 Thumbs.db
+
+# ローカル依存ライブラリ (git submodule update --init でセットアップ)
+/lib/
