@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
-    "@ludiars/vestigium": "git+https://github.com/LUDIARS/Vestigium.git",
+    "@ludiars/vestigium": "file:./lib/vestigium",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "better-sqlite3": "^11.3.0",
