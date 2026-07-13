@@ -20,22 +20,27 @@
     "env:set": "npx tsx ../Cernere/packages/env-cli/src/cli.ts set",
     "env:initialize": "npx tsx ../Cernere/packages/env-cli/src/cli.ts initialize"
   },
+  "overrides": {
+    "tsx": {
+      "esbuild": "0.28.1"
+    }
+  },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@ludiars/vestigium": "file:./lib/vestigium",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "better-sqlite3": "^11.3.0",
-    "hono": "^4.6.10",
+    "hono": "^4.12.30",
     "paseto": "^3.1.4",
-    "qrcode": "^1.5.4",
-    "tsx": "^4.21.0"
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.0",
     "@types/qrcode": "^1.5.5",
     "esbuild": "^0.27.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.6.0"
   }
 }
