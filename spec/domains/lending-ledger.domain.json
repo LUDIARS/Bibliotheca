@@ -1,0 +1,14 @@
+{
+  "name": "lending-ledger",
+  "description": "貸出台帳。 本・機材の在庫と貸出/返却の記録。",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    {
+      "pathPattern": "(^|/)server/master/(?:.*/)?[^/]+$"
+    },
+    {
+      "pathPattern": "(^|/)server/routes/(?:.*/)?[^/]+$"
+    }
+  ]
+}

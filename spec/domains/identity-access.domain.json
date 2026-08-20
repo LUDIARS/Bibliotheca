@@ -1,0 +1,14 @@
+{
+  "name": "identity-access",
+  "description": "認証と権限。 Cernere SSO を情報源とする本人性。",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    {
+      "pathPattern": "(^|/)server/auth(?:/(?:.*/)?[^/]+|\\.ts)$"
+    },
+    {
+      "pathPattern": "(^|/)server/corpus\\.ts$"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "web-frontend",
+  "description": "ブラウザ側の画面。 台帳の表示とカメラスキャン (ISBN / QR) の入力。",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    {
+      "pathPattern": "(^|/)public/(?:.*/)?[^/]+$"
+    }
+  ]
+}
