@@ -12,9 +12,12 @@ services:
     port: 17501
     depends_on: [cernere]
     autostart: false
+    frontend_url: https://bb${DOMAIN_ROOT}
     env:
       BIBLIOTHECA_PORT: "17501"
       BIBLIOTHECA_PROJECT_KEY: bibliotheca
+      # 公開 URL (Cernere トークンの audience) は Excubitor の DOMAIN_ROOT から組み立てる。
+      BIBLIOTHECA_PUBLIC_URL: https://bb${DOMAIN_ROOT}
     required_env: [CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL]
     health:
       type: http
