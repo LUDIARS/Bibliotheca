@@ -35,58 +35,26 @@ LUDIARS の本 / 機材 貸出台帳。 Cernere SSO + カメラスキャン (ISB
 
 ## 起動
 
-3 種類の env 供給モードに対応。 起動時に env-bootstrap が順次拾う。
+Excubitor のサービス bibliotheca から起動する。定義の正本は
+[excubitor.catalog.yaml](excubitor.catalog.yaml)。依存関係導入時は
+Vestigium submodule を初期化し、npm install を行う。
 
-### Mode A: ローカル .env (一番手軽)
+設定と secret は Excubitor が注入する。優先順位は topology < catalog env < 暗号化 runtime config < Vault。
+CERNERE_BASE_URL は Cernere の topology から供給する。BIBLIOTHECA_PUBLIC_URL は
+実際の公開 URL を runtime config 等に設定する。現行値は未確認のため既定値を置かない。
+アプリによる Infisical 取得やローカル env ファイル読込みは行わない。
+Cernere の資格情報は Excubitor が起動ごとに発行する。project 登録状況は別途確認が必要。
 
-```bash
-cp .env.example .env
-# .env を編集: BIBLIOTHECA_ADMIN_IDS にユーザ ID を列挙
-npm install
-npm run dev
-```
+node --run start:excubitor は npm run start を呼び、prestart で frontend をビルドしてから
+bootstrap を実行する。監視対象の root process は Node。
+必須設定の不足・空白値は変数名だけを示して停止する。dev も環境変数注入済みを前提とする。
 
-### Mode B: Infisical (env-cli 経由) — 推奨
-
-machine identity (`INFISICAL_*`) を `.env.secrets` に保存し、 アプリ値は
-Infisical 側に置く。 Memoria / Cernere / Actio / Nuntius と同パターン。
-
-```bash
-npm install
-npm run env:setup       # Infisical machine identity を対話入力 → .env.secrets
-npm run env:test        # Infisical 接続確認
-npm run env:list        # 登録済 secret 一覧
-npm run env:set BIBLIOTHECA_ADMIN_IDS user_abc,user_def
-npm run dev             # bootstrap.ts が起動時に Infisical から fetch + inject
-```
-
-### Mode C: Excubitor 経由 (本番運用)
-
-Excubitor が parent → child process に `INFISICAL_*` を直接 inject。
-リポに `.env*` を置く必要なし。 catalog.yaml で
-`infisical.inject: true` を立てるだけ。
-
-### 起動シーケンス
-
-`npm run dev` は `tsx watch --env-file-if-exists=.env.secrets
---env-file-if-exists=.env server/bootstrap.ts` を呼ぶ。 bootstrap が:
-
-1. `.env.secrets` (INFISICAL_*) と `.env` (アプリ env のローカルフォールバック) を読む
-2. `ensureEnv()` が Infisical から secret を fetch + inject (既存値は上書きしない)
-3. `index.ts` を import して本体起動
-
-Infisical 到達不可・creds 未設定でも throw せず、 `.env` / host env のみで
-graceful degrade する。
-
-デフォルト `http://localhost:17501` (loopback)。
+詳しくは [セットアップ](spec/setup/setup.md)、[テスト設計](spec/test/test-design.md) を参照。
 
 ## ポート
 
-`17501` — LUDIARS port-map の loopback サービスレンジ (17000–17999)。
-`infra/PORT-MAP.md` への登録は別 PR。
-
-> 注: 当初 17500 を選んだが Windows では Dropbox LAN sync が `0.0.0.0:17500`
-> を常に squat するため、 1 つずらして 17501 を採用した。
+catalog に 17501 を宣言する。2026-10-04 の Excubitor ports API で
+17501 の待受と既存 catalog 割当がないことを確認した。自動起動は無効。
 
 ## ライセンス
 

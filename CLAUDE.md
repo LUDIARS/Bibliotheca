@@ -18,9 +18,9 @@
 - 返却操作は `requireAdmin` middleware で保護 — `BIBLIOTHECA_ADMIN_IDS` を信頼源にする
 - 個人データは Cernere 単一情報源、 自前 DB には `userId` (= Cernere sub) と
   display name の **キャッシュ** のみ保持
-- 起動口は `server/bootstrap.ts`: Infisical machine identity (INFISICAL_*) →
-  `ensureEnv()` で Infisical から secret fetch & inject → `index.ts` 読み込み。
-  .env / .env.secrets / host env / Infisical を多段で merge する
+- 起動口は server/bootstrap.ts: Excubitor が注入した必須 env を検証してから
+  index.ts を読み込む。設定値・secret の供給は Excubitor / Vault の責務。
+- catalog は excubitor.catalog.yaml。必須設定不足は変数名だけを示して停止する。
 
 ## マスタソース追加の流れ
 
@@ -38,5 +38,5 @@
 
 ## テスト方針
 
-- v0.1 は手動 (npm run dev → ブラウザでスキャン → 借りる → 別アカで返却)
-- 後で vitest 入れて auth と routes/loans の最小ケースだけ書く
+- 設定検証の回帰テストは npm test（node:test + tsx）。実行は明示指示または審査で行う。
+- 手動の貸出・返却確認には Excubitor 起動と testing claim が必要。

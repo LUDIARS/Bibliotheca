@@ -1,0 +1,24 @@
+{
+  "name": "service-runtime",
+  "description": "プロセスとしての Bibliotheca。Excubitor が注入した必須 env の検査、起動と配線、Excubitor catalog への登録。",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    {
+      "pathPattern": "(^|/)server/(?:index|bootstrap)\\.ts$"
+    },
+    {
+      "pathPattern": "(^|/)server/lib/required-env\\.ts$"
+    },
+    {
+      "pathPattern": "(^|/)contracts/required-env\\.contract\\.ts$"
+    },
+    {
+      "pathPattern": "(^|/)test/(?:required-env|vault-only-config)\\.test\\.ts$"
+    }
+  ],
+  "specRefs": [
+    "spec/setup/setup.md",
+    "spec/tasks/excubitor-vault-only.md"
+  ]
+}

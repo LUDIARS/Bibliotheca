@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "contractsDir": "contracts",
+  "importFrom": "@ludiars/log-weaver",
+  "contracts": [
+    {
+      "id": "C-1",
+      "criterion": "C-1 requireEnv(name, env): 注入された必須値を返し、未設定・空白値は変数名だけを示す例外で停止する",
+      "symbol": "requireEnv",
+      "file": "server/lib/required-env.ts",
+      "module": "./contracts/required-env.contract.ts",
+      "mode": "observe",
+      "sample": 1
+    }
+  ]
+}

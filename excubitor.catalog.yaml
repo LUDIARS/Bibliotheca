@@ -1,0 +1,30 @@
+# Bibliotheca owns this definition. Excubitor supplies settings and Vault secrets.
+services:
+  - code: bibliotheca
+    name: Bibliotheca (貸出台帳)
+    tier: saas
+    project_code: bibliotheca
+    component: server
+    repo: LUDIARS/Bibliotheca
+    runtime: node
+    cwd: ${ARS_ROOT}/Bibliotheca
+    command: node --run start:excubitor
+    port: 17501
+    depends_on: [cernere]
+    autostart: false
+    env:
+      BIBLIOTHECA_PORT: "17501"
+      BIBLIOTHECA_PROJECT_KEY: bibliotheca
+    required_env: [CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL]
+    health:
+      type: http
+      url: http://127.0.0.1:17501/api/health
+      interval_sec: 30
+    provides:
+      BIBLIOTHECA_URL: http://${host}:${port}
+      BIBLIOTHECA_BASE_URL: http://${host}:${port}
+    requires_secret:
+      - service: cernere
+        keys: [EXCUBITOR_CERNERE_CLIENT_ID, EXCUBITOR_CERNERE_CLIENT_SECRET]
+    cernere_launch_credentials:
+      target_project: bibliotheca

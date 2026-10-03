@@ -5,8 +5,15 @@ Bibliotheca は **Web サービス（貸出台帳）** 種別。重視点は貸�
 認可境界（貸出=本人 / 返却=admin、未認証で破壊操作不可）。
 
 ## 現状
-- **CLAUDE.md の方針**: v0.1 は手動確認、v0.2 で vitest を導入する計画。
-- 現時点で自動テストは未整備（**ドキュメント充実度の gap**）。
+
+- 設定検証は test/required-env.test.ts、Vault-only 配線は test/vault-only-config.test.ts。
+- npm test で実行可能。今回の委託では実行禁止のため審査に委ねる。
+- augur plan の現状動作の固定という提案に沿い、注入値の trim、未設定・空白値の拒否、
+  例外への他の secret 混入防止、起動スクリプト・catalog・事前検証の配線を対象にした。
+- C-1 requireEnv(name, env): 注入された必須値を返し、未設定・空白値は変数名だけを示す例外で停止する
+- 契約定義と述語は augur.contracts.json / contracts/required-env.contract.ts。
+  contract-wrap は Anatomia のログ書込み権限エラーで失敗し、実測証跡は未取得。
+- 貸出・返却・認証の自動テストは以下の未整備項目に残る。
 
 ## 種別ごとの「やること」（充実とみなす対象）
 

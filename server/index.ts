@@ -25,20 +25,9 @@ import { makeLoanRouter } from './routes/loans.ts';
 import { makeMeRouter } from './routes/me.ts';
 import { makeReturnRouter } from './routes/returns.ts';
 import { corpusManifest, CORPUS_MANIFEST_PATH } from './corpus.ts';
+import { requireEnv } from './lib/required-env.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-/** 必須 env を取り出す。 未設定なら落とす (= localhost 等の暗黙 fallback は禁止)。 */
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v || !v.trim()) {
-    console.error(
-      `[bibliotheca] ${name} が未設定です。 Infisical / .env.secrets / .env / host env のいずれかで指定してください。`,
-    );
-    process.exit(1);
-  }
-  return v.trim();
-}
 
 // listen port / data dir は値が無くてもサービスとして成立するので default 容認 (= 純粋な dev utility)
 const PORT = Number(process.env.BIBLIOTHECA_PORT ?? 17501);

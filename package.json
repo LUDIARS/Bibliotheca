@@ -6,19 +6,14 @@
   "type": "module",
   "scripts": {
     "predev": "npm run build:web",
-    "dev": "tsx watch --env-file-if-exists=.env.secrets --env-file-if-exists=.env server/bootstrap.ts",
+    "dev": "tsx watch server/bootstrap.ts",
     "prestart": "npm run build:web",
-    "start": "tsx --env-file-if-exists=.env.secrets --env-file-if-exists=.env server/bootstrap.ts",
+    "start": "tsx server/bootstrap.ts",
+    "start:excubitor": "npm run start",
     "build:web": "esbuild public/src/app.ts public/src/declarative.ts --bundle --outdir=public --target=es2020 --sourcemap --format=esm",
     "watch:web": "esbuild public/src/app.ts public/src/declarative.ts --bundle --outdir=public --target=es2020 --sourcemap --format=esm --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.frontend.json",
-    "env:setup": "npx tsx ../Cernere/packages/env-cli/src/cli.ts setup",
-    "env:test": "npx tsx ../Cernere/packages/env-cli/src/cli.ts test",
-    "env:gen": "npx tsx ../Cernere/packages/env-cli/src/cli.ts env",
-    "env:list": "npx tsx ../Cernere/packages/env-cli/src/cli.ts list",
-    "env:get": "npx tsx ../Cernere/packages/env-cli/src/cli.ts get",
-    "env:set": "npx tsx ../Cernere/packages/env-cli/src/cli.ts set",
-    "env:initialize": "npx tsx ../Cernere/packages/env-cli/src/cli.ts initialize"
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
