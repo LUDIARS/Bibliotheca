@@ -13,6 +13,7 @@ import {
   type EquipmentRow,
 } from '../db.ts';
 import type { MasterSource } from '../master/source.ts';
+import { makeBookRouter } from './books.ts';
 
 /** 新規 QR を発行。 `BB-` プレフィクス + 10 文字 base36 (= 機材判定が一目で分かる)。 */
 function generateQrCode(): string {
@@ -27,6 +28,7 @@ export function makeItemRouter(
   master: MasterSource,
 ): Hono {
   const r = new Hono();
+  r.route('/books', makeBookRouter(db, master));
 
   // 任意の external_key の中身を引く (book/equipment 両対応)
   r.get('/lookup', requireAuth, async (c) => {

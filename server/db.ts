@@ -7,6 +7,7 @@
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { migrateBookHoldings } from './migrations/book-holdings.ts';
 
 export type ItemSource = 'book' | 'equipment';
 
@@ -94,6 +95,7 @@ export function openDb(dbPath: string): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_return_token_user
       ON return_token(user_id, expires_at);
   `);
+  migrateBookHoldings(db);
   return db;
 }
 

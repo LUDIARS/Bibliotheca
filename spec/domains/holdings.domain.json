@@ -1,0 +1,18 @@
+{
+  "name": "holdings",
+  "description": "Explicit ownership references for books and equipment, separated from external metadata caches. Provides authenticated inventory lists and administrator registration for GLab.",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    { "pathPattern": "(^|/)server/(?:book-holdings|db)\\.ts$" },
+    { "pathPattern": "(^|/)server/migrations/book-holdings\\.ts$" },
+    { "pathPattern": "(^|/)server/routes/(?:books|items)\\.ts$" },
+    { "pathPattern": "(^|/)test/book-holdings\\.test\\.ts$" }
+  ],
+  "specRefs": [
+    "spec/feature/book-holdings.md",
+    "spec/feature/book-import.md",
+    "spec/feature/equipment-master.md",
+    "spec/data/schema.md"
+  ]
+}
