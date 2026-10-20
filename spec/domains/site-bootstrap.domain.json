@@ -1,0 +1,8 @@
+{
+  "name": "site-bootstrap",
+  "description": "Excubitor-owned AWS setup and explicit Bibliotheca database transfer.",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [{ "pathPattern": "(^|/)scripts/site/.*\\.mjs$" }],
+  "specRefs": ["spec/feature/aws-bootstrap.md"]
+}
