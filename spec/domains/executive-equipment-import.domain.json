@@ -1,0 +1,13 @@
+{
+  "name": "executive-equipment-import",
+  "description": "Cc executive evidence, signed operator batches and atomic equipment additions.",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    { "pathPattern": "(^|/)server/equipment-import.*\\.ts$" },
+    { "pathPattern": "(^|/)server/cli/(sign|import)-equipment\\.ts$" },
+    { "pathPattern": "(^|/)server/migrations/equipment-import\\.ts$" },
+    { "pathPattern": "(^|/)test/equipment-import\\.test\\.ts$" }
+  ],
+  "specRefs": ["spec/feature/executive-equipment-import.md", "spec/feature/equipment-master.md"]
+}

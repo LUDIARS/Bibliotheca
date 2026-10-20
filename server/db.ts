@@ -8,6 +8,7 @@ import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { migrateBookHoldings } from './migrations/book-holdings.ts';
+import { migrateEquipmentImport } from './migrations/equipment-import.ts';
 
 export type ItemSource = 'book' | 'equipment';
 
@@ -96,6 +97,7 @@ export function openDb(dbPath: string): Database.Database {
       ON return_token(user_id, expires_at);
   `);
   migrateBookHoldings(db);
+  migrateEquipmentImport(db);
   return db;
 }
 
