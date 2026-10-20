@@ -3,8 +3,10 @@
 ID: SPEC-BB-AWS-001
 
 Bibliotheca runs from the AWS primary checkout through Excubitor. Setup installs
-the Vestigium submodule first, then application dependencies and the web bundle.
-Required URLs come from Excubitor/Vault. Setup never launches a process.
+and initializes the Vestigium submodule first, then application dependencies and the web bundle.
+Required URLs come from Excubitor/Vault at service launch, not during the bootstrap
+hook. The existing server bootstrap validates them before loading the database.
+Setup never launches a service.
 
 Service-data transfer is separate from adding equipment. Export uses SQLite's
 consistent backup API and a versioned Bibliotheca-only JSON envelope. Import
