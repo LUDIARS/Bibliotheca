@@ -76,7 +76,7 @@ app.use(
 app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'OPTIONS'] }));
 
 app.get('/api/health', (c) =>
-  c.json({ ok: true, service: 'bibliotheca', port: PORT }),
+  c.json({ ok: true, service: 'bibliotheca', version: corpusManifest.version, port: PORT }),
 );
 
 // Corpus hub 用サービスマニフェスト (認証不要)。 Corpus DESIGN.md §13 の

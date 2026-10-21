@@ -1,5 +1,10 @@
 # セットアップ
 
+## 稼働確認のバージョン
+
+`GET /api/health` は `version` に Corpus manifest と同じサービスバージョンを返す。
+現在の登録値は `0.1.0`。GLab のサービス状況もこの値を表示する。
+
 ## 前提
 
 Node.js（`node --run` 対応）、初期化済み Vestigium submodule、npm 依存関係、
