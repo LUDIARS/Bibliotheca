@@ -12,13 +12,13 @@
 
 | Method/path | action | risk | 最新データ認可 |
 | --- | --- | --- | --- |
-| GET /items/equipment | equipment.list | read | 認可済み GLAB 利用者に共有機材情報のみ |
+| GET /items/equipment | equipment.list | read | qr_code/name/spec/added_at の共有カタログ列のみ。登録者 ID は返さない |
 | GET /items/lookup | items.lookup | read | 認可済み GLAB 利用者に公開外部マスタのみ |
 | GET /items/books | inventory.books.list | read | 登録済み共有 holdings のみ |
 | POST /items/books | inventory.books.create | important | 現在ローカル admin 集合に含む本人のみ。OpenBD 確認と切断検査後に登録 |
 | GET /me | identity.self.read | sensitive_read | Cr が検証した本人のみ、admin はローカル管理者集合で判定 |
 | GET /loans/mine | loans.own.read | sensitive_read | 検証済み本人 ID で DB を絞る。query の他人 ID は使わない |
-| POST /loans | loans.create | important | 借用者を検証済み本人から確定。現在のマスタ存在と貸出中行を実挿入直前に確認 |
+| POST /loans | loans.create | important | 借用者を検証済み本人から確定。現在のマスタ存在と貸出中行を実挿入直前に確認。409 は already_borrowed のみで他人の台帳を返さない |
 
 POST 本文は64KiB、捕捉期限15秒。GET 本文は0bytes。parser より前に単一 reader で捕捉し、許可された同じ bytes を既存 handler へ replay する。超過・中断・期限・検証失敗では DB へ進まない。reader cancellation は同じ Promise を全経路で await し、timer/listener/reader lock を所有者が解放する。外部マスタ照会後の切断も挿入前に検査する。consume と DB は分散 transaction ではなく、消費後のアプリケーション障害を認証失敗に変えず、再試行しない。
 

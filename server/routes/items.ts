@@ -8,6 +8,7 @@ import type Database from 'better-sqlite3';
 import { requireAdmin, requireAuth } from '../auth.ts';
 import {
   listEquipment,
+  type EquipmentRow,
 
 
 } from '../db.ts';
@@ -18,6 +19,7 @@ export function makeItemRouter(
   db: Database.Database,
   master: MasterSource,
   authenticate: MiddlewareHandler = requireAuth,
+  equipmentView: (row: EquipmentRow) => Pick<EquipmentRow, 'qr_code' | 'name' | 'spec' | 'added_at'> = row => row,
 ): Hono {
   const r = new Hono();
   r.route('/books', makeBookRouter(db, master, authenticate));
@@ -41,7 +43,7 @@ export function makeItemRouter(
   // 機材一覧 (admin が登録した機材マスタ)
   r.get('/equipment', authenticate, (c) => {
     const rows = listEquipment(db);
-    return c.json({ items: rows });
+    return c.json({ items: rows.map(equipmentView) });
   });
 
   // Equipment intake is exclusively the verified Cc operator import.

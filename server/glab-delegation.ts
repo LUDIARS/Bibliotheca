@@ -71,8 +71,10 @@ export function makeGlabRouter(db: Database.Database, master: MasterSource,
   delegations: CompositeDelegations, adminIds: ReadonlySet<string>): Hono {
   const router = new Hono();
   const authenticate = glabAuthentication(delegations, adminIds);
-  router.route('/items', makeItemRouter(db, master, authenticate));
-  router.route('/loans', makeLoanRouter(db, master, authenticate));
+  router.route('/items', makeItemRouter(db, master, authenticate, row => ({
+    qr_code: row.qr_code, name: row.name, spec: row.spec, added_at: row.added_at,
+  })));
+  router.route('/loans', makeLoanRouter(db, master, authenticate, { includeConflictRecord: false }));
   router.route('/me', makeMeRouter(authenticate));
   router.all('*', c => c.json({ error: 'unclassified_glab_operation' }, 403));
   return router;

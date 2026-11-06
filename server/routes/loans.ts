@@ -44,6 +44,7 @@ export function makeLoanRouter(
   db: Database.Database,
   master: MasterSource,
   authenticate: MiddlewareHandler = requireAuth,
+  { includeConflictRecord = true }: { includeConflictRecord?: boolean } = {},
 ): Hono {
   const r = new Hono();
 
@@ -90,7 +91,8 @@ export function makeLoanRouter(
     // 同一物の二重貸し出し防止
     const existing = findOpenLoan(db, source as ItemSource, externalKey);
     if (existing) {
-      return c.json({ error: 'already_borrowed', loan: existing }, 409);
+      // A create permission does not grant access to another borrower's history/note.
+      return c.json({ error: 'already_borrowed', ...(includeConflictRecord ? { loan: existing } : {}) }, 409);
     }
 
     const id = getIdentity(c);

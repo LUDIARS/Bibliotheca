@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { Hono } from 'hono';
-import { openDb } from '../server/db.ts';
+import { openDb, createLoan, upsertEquipment } from '../server/db.ts';
 import { GLAB_PREFIX, makeGlabRouter } from '../server/glab-delegation.ts';
 import { CompositeDelegations, type DelegatedHttpOperation } from '../vendor/cernere-composite/source/delegation.js';
 import type { BoundServiceSession } from '../vendor/cernere-composite/source/service-session.js';
@@ -9,6 +11,17 @@ import type { MasterSource } from '../server/master/source.ts';
 
 const token = 'a'.repeat(43);
 const user = { id: 'borrower', role: 'general', displayName: 'Borrower', email: null };
+
+test('vendored SDK and license retain the exact accepted upstream bytes', () => {
+  const root = new URL('../vendor/cernere-composite/', import.meta.url);
+  const pin = JSON.parse(readFileSync(new URL('source-pin.json', root), 'utf8')) as { revision: string; hashes: Record<string, string> };
+  assert.equal(pin.revision, '71d6c368dc188bbb95f9af323d347060425d99d6');
+  assert.deepEqual(Object.keys(pin.hashes).sort(), ['LICENSE', 'captured-operation.ts', 'composite.ts', 'delegation.ts',
+    'service-identity.ts', 'service-session.ts', 'types.ts', 'upload-body.ts', 'upload.ts']);
+  for (const [file, expected] of Object.entries(pin.hashes)) {
+    assert.equal(createHash('sha256').update(readFileSync(new URL(`source/${file}`, root))).digest('hex'), expected, file);
+  }
+});
 
 function fixture() {
   const db = openDb(':memory:');
@@ -148,6 +161,23 @@ test('accepted holdings routes share the strict gate and retain local admin auth
     const listed = await f.request(path, 'inventory.books.list');
     assert.equal((await listed.response.json() as { items: unknown[] }).items.length, 1);
     assert.equal(f.consumes(), 4);
+  } finally { f.db.close(); }
+});
+
+test('delegated catalogue and borrow conflicts disclose no other actor or private loan fields', async () => {
+  const f = fixture();
+  try {
+    upsertEquipment(f.db, { qrCode: 'BB-OTHER', name: 'Camera', spec: 'Shared specification', addedByUserId: 'private-creator' });
+    createLoan(f.db, { source: 'equipment', externalKey: 'BB-OTHER', borrowerUserId: 'another-subject',
+      borrowerDisplayName: 'Private borrower', dueAt: null, note: 'private-loan-note' });
+    const catalogue = await f.request(`${GLAB_PREFIX}/items/equipment`, 'equipment.list');
+    assert.equal(catalogue.response.status, 200);
+    const items = (await catalogue.response.json() as { items: Record<string, unknown>[] }).items;
+    assert.deepEqual(Object.keys(items[0] ?? {}).sort(), ['added_at', 'name', 'qr_code', 'spec']);
+    assert.ok(!JSON.stringify(items).includes('private-creator'));
+    const conflict = await f.request(`${GLAB_PREFIX}/loans`, 'loans.create', 'POST', JSON.stringify({ source: 'equipment', external_key: 'BB-OTHER' }));
+    assert.equal(conflict.response.status, 409);
+    assert.deepEqual(await conflict.response.json(), { error: 'already_borrowed' });
   } finally { f.db.close(); }
 });
 
