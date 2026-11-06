@@ -1,0 +1,16 @@
+{
+  "name": "glab-delegation",
+  "description": "GLAB専用貸出APIの一度限りの委譲検査と既存台帳への接続",
+  "presetRules": [],
+  "templateRules": [],
+  "membership": [
+    { "pathPattern": "(^|/)\\.gitattributes$" },
+    { "pathPattern": "(^|/)server/glab-[^/]+\\.ts$" },
+    { "pathPattern": "(^|/)server/routes/(items|loans|me|books)\\.ts$" },
+    { "pathPattern": "(^|/)vendor/cernere-composite/" },
+    { "pathPattern": "(^|/)scripts/vendor-composite\\.mjs$" },
+    { "pathPattern": "(^|/)tsconfig\\.glab-contracts\\.json$" },
+    { "pathPattern": "(^|/)test/glab-delegation\\.test\\.ts$" }
+  ],
+  "specRefs": ["spec/feature/glab-scoped-delegation.md"]
+}

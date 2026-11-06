@@ -1,13 +1,13 @@
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import type Database from 'better-sqlite3';
 import { requireAuth, requireAdmin, getIdentity } from '../auth.ts';
 import { listBookHoldings, registerBookHolding } from '../book-holdings.ts';
 import type { MasterSource } from '../master/source.ts';
 
 /** @implements SPEC-BB-HOLDINGS-001 */
-export function makeBookRouter(db: Database.Database, master: MasterSource): Hono {
+export function makeBookRouter(db: Database.Database, master: MasterSource, authenticate: MiddlewareHandler = requireAuth): Hono {
   const r = new Hono();
-  r.use('*', requireAuth);
+  r.use('*', authenticate);
   r.use('*', async (c, next) => {
     c.header('cache-control', 'private, no-store');
     await next();
@@ -21,6 +21,7 @@ export function makeBookRouter(db: Database.Database, master: MasterSource): Hon
     }
     const meta = await master.lookupBook(isbn.replace(/[ -]/g, ''));
     if (!meta) return c.json({ error: 'book_not_found' }, 404);
+    if (c.req.raw.signal.aborted) return c.json({ error: 'request_ended' }, 408);
     registerBookHolding(db, meta.isbn, getIdentity(c).userId);
     return c.json({ isbn: meta.isbn }, 201);
   });

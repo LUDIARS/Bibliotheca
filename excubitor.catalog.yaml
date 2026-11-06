@@ -18,7 +18,7 @@ services:
       BIBLIOTHECA_PROJECT_KEY: bibliotheca
       # 公開 URL (Cernere トークンの audience) は Excubitor の DOMAIN_ROOT から組み立てる。
       BIBLIOTHECA_PUBLIC_URL: https://bb${DOMAIN_ROOT}
-    required_env: [CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL]
+    required_env: [CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL, CERNERE_PROJECT_CLIENT_ID, CERNERE_PROJECT_CLIENT_SECRET]
     health:
       type: http
       url: http://127.0.0.1:17501/api/health

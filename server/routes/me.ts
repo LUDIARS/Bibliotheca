@@ -1,11 +1,11 @@
 // /api/me — フロントエンドが自分の identity と admin 権限を確認するための endpoint。
 
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { getIdentity, requireAuth } from '../auth.ts';
 
-export function makeMeRouter(): Hono {
+export function makeMeRouter(authenticate: MiddlewareHandler = requireAuth): Hono {
   const r = new Hono();
-  r.get('/', requireAuth, (c) => {
+  r.get('/', authenticate, (c) => {
     const id = getIdentity(c);
     return c.json({
       userId: id.userId,

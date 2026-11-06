@@ -16,7 +16,7 @@ test('launch scripts use injected env and preserve the frontend prestart build',
 
 test('startup validates injected settings before loading the application', () => {
   const bootstrap = read('server/bootstrap.ts');
-  for (const name of ['CERNERE_BASE_URL', 'BIBLIOTHECA_PUBLIC_URL']) {
+  for (const name of ['CERNERE_BASE_URL', 'BIBLIOTHECA_PUBLIC_URL', 'CERNERE_PROJECT_CLIENT_ID', 'CERNERE_PROJECT_CLIENT_SECRET']) {
     const validation = bootstrap.indexOf(`requireEnv('${name}')`);
     assert.ok(validation >= 0 && validation < bootstrap.indexOf("import('./index.ts')"));
   }
@@ -32,8 +32,9 @@ test('catalog delegates credentials and endpoint discovery to Excubitor', () => 
   assert.match(catalog, /port: 17501/);
   assert.match(catalog, /autostart: false/);
   assert.match(catalog, /depends_on: \[cernere\]/);
-  assert.match(catalog, /required_env: \[CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL\]/);
+  assert.match(catalog, /required_env: \[CERNERE_BASE_URL, BIBLIOTHECA_PUBLIC_URL, CERNERE_PROJECT_CLIENT_ID, CERNERE_PROJECT_CLIENT_SECRET\]/);
   assert.match(catalog, /target_project: bibliotheca/);
   assert.match(catalog, /keys: \[EXCUBITOR_CERNERE_CLIENT_ID, EXCUBITOR_CERNERE_CLIENT_SECRET\]/);
-  assert.doesNotMatch(catalog, /vtn-game\.com|CERNERE_BASE_URL:|BIBLIOTHECA_PUBLIC_URL:|BIBLIOTHECA_ADMIN_IDS:/);
+  assert.match(catalog, /BIBLIOTHECA_PUBLIC_URL: https:\/\/bb\$\{DOMAIN_ROOT\}/);
+  assert.doesNotMatch(catalog, /vtn-game\.com|CERNERE_BASE_URL:|BIBLIOTHECA_ADMIN_IDS:/);
 });

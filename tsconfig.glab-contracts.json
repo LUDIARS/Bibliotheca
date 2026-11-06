@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["test/glab-delegation.test.ts", "test/vault-only-config.test.ts"]
+}

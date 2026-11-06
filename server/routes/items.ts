@@ -3,7 +3,7 @@
 // 書籍 (ISBN) : 読み取り専用 (OpenBD 経由)。 中身を持たないので登録は不要。
 // 機材 (QR)   : Cc の執行役員由来の検証済みインポートで追加する。
 
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import type Database from 'better-sqlite3';
 import { requireAdmin, requireAuth } from '../auth.ts';
 import {
@@ -17,12 +17,13 @@ import { makeBookRouter } from './books.ts';
 export function makeItemRouter(
   db: Database.Database,
   master: MasterSource,
+  authenticate: MiddlewareHandler = requireAuth,
 ): Hono {
   const r = new Hono();
-  r.route('/books', makeBookRouter(db, master));
+  r.route('/books', makeBookRouter(db, master, authenticate));
 
   // 任意の external_key の中身を引く (book/equipment 両対応)
-  r.get('/lookup', requireAuth, async (c) => {
+  r.get('/lookup', authenticate, async (c) => {
     const source = c.req.query('source');
     const key = c.req.query('key');
     if (source !== 'book' && source !== 'equipment') {
@@ -38,17 +39,17 @@ export function makeItemRouter(
   });
 
   // 機材一覧 (admin が登録した機材マスタ)
-  r.get('/equipment', requireAuth, (c) => {
+  r.get('/equipment', authenticate, (c) => {
     const rows = listEquipment(db);
     return c.json({ items: rows });
   });
 
   // Equipment intake is exclusively the verified Cc operator import.
-  r.post('/equipment', requireAuth, c => c.json({ error: 'executive_cc_import_required' }, 403));
-  r.post('/equipment/bulk', requireAuth, c => c.json({ error: 'executive_cc_import_required' }, 403));
+  r.post('/equipment', authenticate, c => c.json({ error: 'executive_cc_import_required' }, 403));
+  r.post('/equipment/bulk', authenticate, c => c.json({ error: 'executive_cc_import_required' }, 403));
 
   // 書籍 ISBN 一覧をまとめて OpenBD で warm cache。 admin 限定 (= 外部 API 叩くので)。
-  r.post('/books/bulk', requireAuth, requireAdmin, async (c) => {
+  r.post('/books/bulk', authenticate, requireAdmin, async (c) => {
     const body = (await c.req.json().catch(() => null)) as { isbns?: string[] } | null;
     if (!body || !Array.isArray(body.isbns)) {
       return c.json({ error: 'isbns_required' }, 400);

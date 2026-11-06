@@ -26,6 +26,8 @@ import { makeMeRouter } from './routes/me.ts';
 import { makeReturnRouter } from './routes/returns.ts';
 import { corpusManifest, CORPUS_MANIFEST_PATH } from './corpus.ts';
 import { requireEnv } from './lib/required-env.ts';
+import { CernereComposite } from '../vendor/cernere-composite/source/composite.js';
+import { GLAB_PREFIX, makeGlabRouter } from './glab-delegation.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +43,8 @@ const DB_PATH = join(DATA_DIR, 'bibliotheca.db');
 // 認証系は必須 — 不正な値で起動して全リクエスト 401 になるより、 起動を止める
 const CERNERE_BASE_URL = requireEnv('CERNERE_BASE_URL');
 const AUDIENCE = requireEnv('BIBLIOTHECA_PUBLIC_URL');
+const composite = new CernereComposite({ cernereUrl: CERNERE_BASE_URL, projectKey: 'bibliotheca',
+  clientId: requireEnv('CERNERE_PROJECT_CLIENT_ID'), clientSecret: requireEnv('CERNERE_PROJECT_CLIENT_SECRET') });
 
 const ADMIN_IDS = new Set(
   (process.env.BIBLIOTHECA_ADMIN_IDS ?? '')
@@ -88,6 +92,7 @@ app.route('/api/me', makeMeRouter());
 app.route('/api/items', makeItemRouter(db, master));
 app.route('/api/loans', makeLoanRouter(db, master));
 app.route('/api/returns', makeReturnRouter(db, master));
+app.route(GLAB_PREFIX, makeGlabRouter(db, master, composite.delegations, ADMIN_IDS));
 
 // serveStatic は cwd 相対なので、 npm scripts は repo root から起動する前提。
 app.use('/*', serveStatic({ root: './public' }));
@@ -100,10 +105,12 @@ app.notFound((c) => {
   return c.redirect('/');
 });
 
-serve({ fetch: app.fetch, port: PORT }, (info) => {
+const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
   console.log(`[bibliotheca] listening on http://localhost:${info.port}`);
   console.log(`[bibliotheca] data dir: ${DATA_DIR}`);
   console.log(`[bibliotheca] cernere: ${CERNERE_BASE_URL}`);
   console.log(`[bibliotheca] audience: ${AUDIENCE}`);
   console.log(`[bibliotheca] admin user ids: ${ADMIN_IDS.size}`);
 });
+server.once('close', () => composite.dispose());
+server.once('error', () => composite.dispose());

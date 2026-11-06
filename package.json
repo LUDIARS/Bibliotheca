@@ -12,7 +12,7 @@
     "start:excubitor": "npm run start",
     "build:web": "esbuild public/src/app.ts public/src/declarative.ts --bundle --outdir=public --target=es2020 --sourcemap --format=esm",
     "watch:web": "esbuild public/src/app.ts public/src/declarative.ts --bundle --outdir=public --target=es2020 --sourcemap --format=esm --watch",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.frontend.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.frontend.json && tsc --noEmit -p tsconfig.glab-contracts.json",
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {

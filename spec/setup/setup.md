@@ -24,6 +24,8 @@ Excubitor から `bibliotheca` を起動する。自動起動は無効。
 |---|---|
 | `CERNERE_BASE_URL` | 必須。Cernere の provides から topology で注入 |
 | `BIBLIOTHECA_PUBLIC_URL` | 必須。認証 audience。現行公開 URL を runtime config 等に設定。現在未確認 |
+| `CERNERE_PROJECT_CLIENT_ID` | 必須。bibliotheca の起動単位 project credential。Excubitor が供給 |
+| `CERNERE_PROJECT_CLIENT_SECRET` | 必須。上記に対応する secret。バックエンドだけで保持し出力しない |
 | `BIBLIOTHECA_PORT` | catalog env: 17501 |
 | `BIBLIOTHECA_PROJECT_KEY` | catalog env: bibliotheca（非 secret） |
 | `BIBLIOTHECA_DATA` | 任意。既定はリポの data ディレクトリ |
@@ -32,6 +34,13 @@ Excubitor から `bibliotheca` を起動する。自動起動は無効。
 Cernere の issuer secret は `requires_secret` で Vault binding を参照し、
 `cernere_launch_credentials.target_project: bibliotheca` により起動単位の資格情報を発行する。
 固定の client secret は保持しない。Cernere project の登録状況は未確認であり、この変更では登録しない。
+
+GLAB 専用の7操作は [scoped delegation 契約](../feature/glab-scoped-delegation.md) を参照。
+管理者が `bibliotheca` の hub_url と7 target actions、GLAB の対応する
+`delegate.bibliotheca.<action>`、双方の必要な consent permission を明示登録し、
+GLAB host の `CORPUS_DELEGATION_AUDIENCES` にその同じ canonical audience を設定する。
+transport URL や取得した manifest から audience を推測しない。設定値・同意・GLAB caller
+移行・旧 PWA の残存を照合するまで一斉切替しない。起動資格情報や本設定は今回未適用。
 
 17501 は 2026-10-04 に Excubitor ports API で待受・既存 catalog 割当なしを確認した。
 旧公開ドメインは再利用しない。既存のローカル env ファイルの移行確認・削除は親セッションが行う。

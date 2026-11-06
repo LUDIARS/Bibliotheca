@@ -11,6 +11,8 @@ const main = async (): Promise<void> => {
   // Validate before loading the database and authentication modules.
   requireEnv('CERNERE_BASE_URL');
   requireEnv('BIBLIOTHECA_PUBLIC_URL');
+  requireEnv('CERNERE_PROJECT_CLIENT_ID');
+  requireEnv('CERNERE_PROJECT_CLIENT_SECRET');
   await import('./index.ts');
 };
 

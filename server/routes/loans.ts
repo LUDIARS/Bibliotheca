@@ -3,7 +3,7 @@
 // 貸出は本人が自分の名前で行う (Cernere identity から userId を確定)。
 // 返却は **admin role のみ** 実行可能。 admin が物理確認したうえで返却フラグを立てる。
 
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import type Database from 'better-sqlite3';
 import { requireAdmin, requireAuth, getIdentity } from '../auth.ts';
 import {
@@ -43,18 +43,19 @@ async function decorate(
 export function makeLoanRouter(
   db: Database.Database,
   master: MasterSource,
+  authenticate: MiddlewareHandler = requireAuth,
 ): Hono {
   const r = new Hono();
 
   // 貸出中一覧 (管理者画面 + 一般ユーザの「誰が借りているか」両用)
-  r.get('/open', requireAuth, async (c) => {
+  r.get('/open', authenticate, async (c) => {
     const rows = listOpenLoans(db);
     const items = await decorate(rows, master);
     return c.json({ items });
   });
 
   // 自分の貸出履歴
-  r.get('/mine', requireAuth, async (c) => {
+  r.get('/mine', authenticate, async (c) => {
     const id = getIdentity(c);
     const includeReturned = c.req.query('all') === '1';
     const rows = listLoansForUser(db, id.userId, includeReturned);
@@ -63,7 +64,7 @@ export function makeLoanRouter(
   });
 
   // 貸出 (本人操作)
-  r.post('/', requireAuth, async (c) => {
+  r.post('/', authenticate, async (c) => {
     const body = (await c.req.json().catch(() => null)) as
       | { source?: string; external_key?: string; due_at?: string | null; note?: string | null }
       | null;
@@ -84,6 +85,8 @@ export function makeLoanRouter(
       if (!meta) return c.json({ error: 'equipment_not_registered' }, 404);
     }
 
+    // A disconnected delegated caller must not commit after an awaited master lookup.
+    if (c.req.raw.signal.aborted) return c.json({ error: 'request_ended' }, 408);
     // 同一物の二重貸し出し防止
     const existing = findOpenLoan(db, source as ItemSource, externalKey);
     if (existing) {
@@ -103,7 +106,7 @@ export function makeLoanRouter(
   });
 
   // 返却 — admin 専用
-  r.post('/:id/return', requireAuth, requireAdmin, (c) => {
+  r.post('/:id/return', authenticate, requireAdmin, (c) => {
     const loanId = Number(c.req.param('id'));
     if (!Number.isFinite(loanId)) return c.json({ error: 'bad_id' }, 400);
     const admin = getIdentity(c);
